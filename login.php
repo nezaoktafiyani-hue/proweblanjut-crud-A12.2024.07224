@@ -250,7 +250,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         .btn:hover {
-            background: #d9b85c;
+            background: #8ce4c2;
         }
 
         .btn:active {
