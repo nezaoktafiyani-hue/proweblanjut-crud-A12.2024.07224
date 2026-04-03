@@ -10,9 +10,13 @@ $error = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = trim($_POST['username']);
     $password = trim($_POST['password']);
+    $confirm_password = trim($_POST['confirm_password']);
 
-    if ($username != "" && $password != "") {
-
+    if ($username != "" && $password != "" && $confirm_password != "") {
+        // Cek password dan konfirmasi cocok
+        if ($password !== $confirm_password) {
+            $error = "Password dan konfirmasi password tidak cocok.";
+        } else {
         // Cek username sudah ada atau belum
         $cek = $pdo->prepare("SELECT id FROM users WHERE username = ?");
         $cek->execute([$username]);
@@ -62,6 +66,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             --border: #2e2b24;
             --error: #e07070;
             --success: #70c490;
+            --warn: #e0a870;
         }
 
         body {
@@ -126,6 +131,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         .field {
             margin-bottom: 20px;
+            position: relative;
         }
 
         label {
@@ -138,6 +144,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             margin-bottom: 8px;
         }
 
+        .input-wrap {
+            position: relative;
+        }
+        
         input[type="text"],
         input[type="password"] {
             width: 100%;
@@ -158,9 +168,45 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background: rgba(201,168,76,0.04);
         }
 
+        /* Match indicator state */
+        input.match {
+            border-color: var(--success) !important;
+        }
+
+        input.no-match {
+            border-color: var(--error) !important;
+        }
+
         input::placeholder {
             color: var(--text-muted);
         }
+
+        /* Match icon inside input */
+        .match-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .match-icon.visible {
+            opacity: 1;
+        }
+
+        /* Hint text below confirm field */
+        .hint {
+            font-size: 11px;
+            margin-top: 6px;
+            height: 14px;
+            transition: color 0.2s;
+        }
+
+        .hint.ok    { color: var(--success); }
+        .hint.fail  { color: var(--error); }
 
         .error-msg {
             background: rgba(224,112,112,0.1);
@@ -199,8 +245,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             transition: background 0.2s, transform 0.1s;
         }
 
-        .btn:hover { background: #d9b85c; }
+        .btn:hover { background: #a0edd0; }
         .btn:active { transform: scale(0.98); }
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
 
         .login-link {
             text-align: center;
@@ -233,9 +283,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="success-msg"><?= htmlspecialchars($success) ?></div>
         <?php endif; ?>
 
-        <form method="POST" action="">
+       <form method="POST" action="" id="registerForm">
             <div class="field">
                 <label for="username">Username</label>
+                <div class="input-wrap">
                 <input
                     type="text"
                     id="username"
@@ -246,8 +297,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     value="<?= isset($_POST['username']) ? htmlspecialchars($_POST['username']) : '' ?>"
                 >
             </div>
+        </div>
+           
             <div class="field">
                 <label for="password">Password</label>
+                <div class="input-wrap">
                 <input
                     type="password"
                     id="password"
@@ -257,12 +311,74 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     autocomplete="new-password"
                 >
             </div>
-            <button type="submit" class="btn">Daftar</button>
+        </div>
+           
+            <div class="field">
+                <label for="confirm_password">Konfirmasi Password</label>
+                <div class="input-wrap">
+                    <input
+                        type="password"
+                        id="confirm_password"
+                        name="confirm_password"
+                        placeholder="Ulangi password"
+                        required
+                        autocomplete="new-password"
+                    >
+                    <span class="match-icon" id="matchIcon"></span>
+                </div>
+                <div class="hint" id="matchHint"></div>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">Daftar</button>
         </form>
 
         <div class="login-link">
             Sudah punya akun? <a href="login.php">Masuk di sini</a>
         </div>
     </div>
+
+    <script>
+        const passwordInput  = document.getElementById('password');
+        const confirmInput   = document.getElementById('confirm_password');
+        const matchIcon      = document.getElementById('matchIcon');
+        const matchHint      = document.getElementById('matchHint');
+        const submitBtn      = document.getElementById('submitBtn');
+
+        function checkMatch() {
+            const pw  = passwordInput.value;
+            const cpw = confirmInput.value;
+
+            if (cpw === '') {
+                confirmInput.classList.remove('match', 'no-match');
+                matchIcon.classList.remove('visible');
+                matchIcon.textContent = '';
+                matchHint.textContent = '';
+                matchHint.className = 'hint';
+                submitBtn.disabled = false;
+                return;
+            }
+
+            if (pw === cpw) {
+                confirmInput.classList.add('match');
+                confirmInput.classList.remove('no-match');
+                matchIcon.textContent = '✓';
+                matchIcon.classList.add('visible');
+                matchHint.textContent = 'Password cocok';
+                matchHint.className = 'hint ok';
+                submitBtn.disabled = false;
+            } else {
+                confirmInput.classList.add('no-match');
+                confirmInput.classList.remove('match');
+                matchIcon.textContent = '✕';
+                matchIcon.classList.add('visible');
+                matchHint.textContent = 'Password tidak cocok';
+                matchHint.className = 'hint fail';
+                submitBtn.disabled = true;
+            }
+        }
+
+        confirmInput.addEventListener('input', checkMatch);
+        passwordInput.addEventListener('input', checkMatch);
+    </script>
 </body>
 </html>
