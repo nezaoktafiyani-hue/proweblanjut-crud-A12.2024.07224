@@ -262,7 +262,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="card">
         <div class="logo-line">
             <div class="logo-dot"></div>
-            <h1>Masuk ke Akun</h1>
+            <h1>Login</h1>
         </div>
         <div class="divider"></div>
 
