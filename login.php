@@ -46,9 +46,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         :root {
-            --bg: #0f0e0c;
+            --bg: #eaeff1;
             --card: #1a1814;
-            --accent: #c9a84c;
+            --accent: #8ce4c2;
             --accent-dim: #7a6230;
             --text: #f0ead8;
             --text-muted: #7a7060;
