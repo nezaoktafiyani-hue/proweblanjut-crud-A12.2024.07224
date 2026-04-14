@@ -51,6 +51,28 @@ $totalNilai  = array_sum(array_map(fn($r) => $r['harga'] * $r['jumlah'], $data))
         background: #c0392b;
         color: #fff;
     }
+
+    /* ── Kolom Foto ── */
+    .foto-thumb {
+        width: 52px;
+        height: 52px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #30363d;
+        display: block;
+    }
+    .foto-placeholder {
+        width: 52px;
+        height: 52px;
+        border-radius: 8px;
+        background: #1c2333;
+        border: 1px dashed #30363d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: #555;
+    }
 </style>
 </head>
 <body>
@@ -109,6 +131,7 @@ $totalNilai  = array_sum(array_map(fn($r) => $r['harga'] * $r['jumlah'], $data))
         <thead>
           <tr>
             <th>ID</th>
+            <th>Foto</th>
             <th>Nama Barang</th>
             <th>Jumlah</th>
             <th>Harga</th>
@@ -120,6 +143,22 @@ $totalNilai  = array_sum(array_map(fn($r) => $r['harga'] * $r['jumlah'], $data))
           <?php foreach($data as $row): ?>
           <tr>
             <td>#<?= $row['id'] ?></td>
+
+            <!-- ── Kolom Foto ── -->
+            <td>
+              <?php
+                // Cek kolom thumb dulu, kalau tidak ada pakai kolom gambar
+                $foto = $row['thumb'] ?? $row['gambar'] ?? null;
+              ?>
+              <?php if (!empty($foto) && file_exists(__DIR__ . '/' . $foto)): ?>
+                <img src="<?= htmlspecialchars($foto) ?>"
+                     alt="<?= htmlspecialchars($row['nama_barang']) ?>"
+                     class="foto-thumb">
+              <?php else: ?>
+                <div class="foto-placeholder">📦</div>
+              <?php endif; ?>
+            </td>
+
             <td><?= htmlspecialchars($row['nama_barang']) ?></td>
             <td><?= number_format($row['jumlah']) ?></td>
             <td>Rp <?= number_format($row['harga']) ?></td>

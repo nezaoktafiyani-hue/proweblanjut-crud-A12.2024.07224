@@ -4,10 +4,14 @@ include "koneksi.php";
 
 $error = "";
 
+// Auto-fill dari cookie jika ada
+$remembered_username = isset($_COOKIE['remember_username']) ? $_COOKIE['remember_username'] : '';
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $username = $_POST['username'];
     $password = $_POST['password'];
+    $remember = isset($_POST['remember']) ? true : false;
 
     $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
     $stmt->execute([$username]);
@@ -18,6 +22,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (password_verify($password, $user['password'])) {
 
             $_SESSION['username'] = $username;
+
+            // Simpan cookie 30 hari jika Remember Me dicentang
+            if ($remember) {
+                setcookie('remember_username', $username, time() + (30 * 24 * 60 * 60), '/');
+            } else {
+                // Hapus cookie jika tidak dicentang
+                setcookie('remember_username', '', time() - 3600, '/');
+            }
+
             header("Location: index.php");
             exit();
 
@@ -46,9 +59,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         :root {
-            --bg: #0f0e0c;
+            --bg: #eaeff1;
             --card: #1a1814;
-            --accent: #c9a84c;
+            --accent: #8ce4c2;
             --accent-dim: #7a6230;
             --text: #f0ead8;
             --text-muted: #7a7060;
@@ -164,6 +177,62 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             margin-bottom: 20px;
         }
 
+        /* ── Remember Me ── */
+        .remember-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            margin-top: -4px;
+        }
+
+        .remember-row input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            background: rgba(255,255,255,0.03);
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .remember-row input[type="checkbox"]:checked {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .remember-row input[type="checkbox"]:checked::after {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 1px;
+            width: 5px;
+            height: 9px;
+            border: 2px solid #0f0e0c;
+            border-top: none;
+            border-left: none;
+            transform: rotate(45deg);
+        }
+
+        .remember-row label {
+            font-size: 12px;
+            letter-spacing: 0.04em;
+            text-transform: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            margin-bottom: 0;
+            user-select: none;
+        }
+
+        .remember-row label:hover {
+            color: var(--text);
+        }
+
+        /* ── Button ── */
         .btn {
             width: 100%;
             background: var(--accent);
@@ -182,7 +251,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         .btn:hover {
-            background: #d9b85c;
+            background: #8ce4c2;
         }
 
         .btn:active {
@@ -194,7 +263,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="card">
         <div class="logo-line">
             <div class="logo-dot"></div>
-            <h1>Masuk ke Akun</h1>
+            <h1>Login</h1>
         </div>
         <div class="divider"></div>
 
@@ -212,7 +281,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     placeholder="Masukkan username"
                     required
                     autocomplete="username"
-                    value="<?= isset($_POST['username']) ? htmlspecialchars($_POST['username']) : '' ?>"
+                    value="<?= htmlspecialchars(
+                        isset($_POST['username'])
+                            ? $_POST['username']
+                            : $remembered_username
+                    ) ?>"
                 >
             </div>
             <div class="field">
@@ -226,6 +299,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     autocomplete="current-password"
                 >
             </div>
+
+            <!-- Remember Me -->
+            <div class="remember-row">
+                <input
+                    type="checkbox"
+                    id="remember"
+                    name="remember"
+                    <?= !empty($remembered_username) ? 'checked' : '' ?>
+                >
+                <label for="remember">Ingat saya selama 30 hari</label>
+            </div>
+
             <button type="submit" class="btn">Masuk</button>
         </form>
     </div>
