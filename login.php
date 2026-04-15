@@ -22,15 +22,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (password_verify($password, $user['password'])) {
 
             $_SESSION['username'] = $username;
-
-            // Simpan cookie 30 hari jika Remember Me dicentang
-            if ($remember) {
-                setcookie('remember_username', $username, time() + (30 * 24 * 60 * 60), '/');
-            } else {
-                // Hapus cookie jika tidak dicentang
-                setcookie('remember_username', '', time() - 3600, '/');
-            }
-
             header("Location: index.php");
             exit();
 

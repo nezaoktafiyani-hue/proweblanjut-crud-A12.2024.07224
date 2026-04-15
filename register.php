@@ -13,10 +13,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $confirm_password = trim($_POST['confirm_password']);
 
     if ($username != "" && $password != "" && $confirm_password != "") {
+<<<<<<< HEAD
 
         // Cek password dan konfirmasi cocok
         if ($password !== $confirm_password) {
             $error = "Password dan konfirmasi password tidak cocok.";
+=======
+        // Cek password dan konfirmasi cocok
+        if ($password !== $confirm_password) {
+            $error = "Password dan konfirmasi password tidak cocok.";
+        } else {
+        // Cek username sudah ada atau belum
+        $cek = $pdo->prepare("SELECT id FROM users WHERE username = ?");
+        $cek->execute([$username]);
+
+        if ($cek->rowCount() > 0) {
+            $error = "Username sudah digunakan.";
+>>>>>>> 70ef77c2aadaf653149844ed1efcb7978398ed2f
         } else {
             // Cek username sudah ada atau belum
             $cek = $pdo->prepare("SELECT id FROM users WHERE username = ?");
@@ -149,7 +162,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         .input-wrap {
             position: relative;
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 70ef77c2aadaf653149844ed1efcb7978398ed2f
         input[type="text"],
         input[type="password"] {
             width: 100%;
@@ -247,7 +264,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             transition: background 0.2s, transform 0.1s, opacity 0.2s;
         }
 
+<<<<<<< HEAD
         .btn:hover  { background: #a0edd0; }
+=======
+        .btn:hover { background: #a0edd0; }
+>>>>>>> 70ef77c2aadaf653149844ed1efcb7978398ed2f
         .btn:active { transform: scale(0.98); }
         .btn:disabled {
             opacity: 0.4;
