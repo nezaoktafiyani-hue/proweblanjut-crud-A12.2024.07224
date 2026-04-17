@@ -89,11 +89,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $namaThumb = 'thumb_' . $namaUnik;
 
                 // e) Pindahkan ke folder permanen
-                $targetPath = $uploadDir . $namaUnik;
-                $thumbTarget = $thumbDir . $namaThumb;
+                $targetPath  = $uploadDir . $namaUnik;
+                $thumbTarget = $thumbDir  . $namaThumb;
 
                 if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-                    // f) Buat thumbnail otomatis (GD Library)
+                    // f) Buat thumbnail otomatis
                     buatThumbnail($targetPath, $thumbTarget, $mime);
                     $gambarPath = 'uploads/original/' . $namaUnik;
                     $thumbPath  = 'uploads/thumbs/'   . $namaThumb;
@@ -106,7 +106,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ── SIMPAN KE DATABASE jika tidak ada error ───────────
     if (empty($errors)) {
-        // PDO Prepared Statement — aman dari SQL Injection
         $stmt = $pdo->prepare(
             "INSERT INTO barang (nama_barang, jumlah, harga, tanggal_masuk, gambar, thumb)
              VALUES (?, ?, ?, ?, ?, ?)"
@@ -129,22 +128,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // FUNGSI HELPER: Buat thumbnail dengan GD Library
 // ──────────────────────────────────────────────────────────
 function buatThumbnail($source, $destination, $mime, $maxW = 200, $maxH = 200) {
+    // Jika GD tidak tersedia, salin file asli sebagai fallback
+    if (!extension_loaded('gd')) {
+        copy($source, $destination);
+        return;
+    }
+
     list($w, $h) = getimagesize($source);
-    $scale  = min($maxW / $w, $maxH / $h);
-    $newW   = (int)($w * $scale);
-    $newH   = (int)($h * $scale);
+    $scale = min($maxW / $w, $maxH / $h);
+    $newW  = (int)($w * $scale);
+    $newH  = (int)($h * $scale);
 
     $srcImg = ($mime === 'image/png') ? imagecreatefrompng($source) : imagecreatefromjpeg($source);
     $thumb  = imagecreatetruecolor($newW, $newH);
 
+    // Pertahankan transparansi PNG
     if ($mime === 'image/png') {
         imagealphablending($thumb, false);
         imagesavealpha($thumb, true);
-        imagepng($thumb, $destination, 8);
+        $transparent = imagecolorallocatealpha($thumb, 0, 0, 0, 127);
+        imagefilledrectangle($thumb, 0, 0, $newW, $newH, $transparent);
     }
 
     imagecopyresampled($thumb, $srcImg, 0, 0, 0, 0, $newW, $newH, $w, $h);
-    ($mime === 'image/png') ? imagepng($thumb, $destination, 8) : imagejpeg($thumb, $destination, 85);
+
+    // Simpan thumbnail (PNG atau JPEG) — hanya dipanggil SEKALI
+    if ($mime === 'image/png') {
+        imagepng($thumb, $destination, 8);
+    } else {
+        imagejpeg($thumb, $destination, 85);
+    }
 
     imagedestroy($srcImg);
     imagedestroy($thumb);
@@ -545,9 +558,6 @@ function buatThumbnail($source, $destination, $mime, $maxW = 200, $maxH = 200) {
       </div>
       <?php endif; ?>
 
-      <!--
-        enctype="multipart/form-data" WAJIB ada untuk upload file
-      -->
       <form method="POST" action="" enctype="multipart/form-data">
         <div style="display:flex;flex-direction:column;gap:20px;">
 
@@ -605,12 +615,10 @@ function buatThumbnail($source, $destination, $mime, $maxW = 200, $maxH = 200) {
               <span class="opt">&nbsp;(Opsional — JPG/PNG, maks. 2MB)</span>
             </label>
 
-            <!-- Area klik untuk pilih file -->
             <div class="upload-area <?= isset($errors['gambar']) ? 'error-border' : '' ?>"
                  id="uploadArea"
                  onclick="document.getElementById('gambar').click()">
 
-              <!-- Placeholder default -->
               <div id="uploadPlaceholder">
                 <div class="upload-icon">☁</div>
                 <div class="upload-label-text">
@@ -619,7 +627,6 @@ function buatThumbnail($source, $destination, $mime, $maxW = 200, $maxH = 200) {
                 <div class="upload-hint">JPG, PNG • Maksimal 2MB</div>
               </div>
 
-              <!-- Preview setelah file dipilih -->
               <div id="previewContainer">
                 <img id="previewImg" src="" alt="Preview">
                 <span id="previewName"></span>
@@ -627,7 +634,6 @@ function buatThumbnail($source, $destination, $mime, $maxW = 200, $maxH = 200) {
               </div>
             </div>
 
-            <!-- Input file tersembunyi -->
             <input type="file"
                    id="gambar"
                    name="gambar"
@@ -653,10 +659,9 @@ function buatThumbnail($source, $destination, $mime, $maxW = 200, $maxH = 200) {
     </div>
   </div>
 
-</div><!-- /container -->
+</div>
 
 <script>
-// Preview gambar sebelum upload menggunakan FileReader API
 function handleFileChange(input) {
   const file = input.files[0];
   if (!file) return;
@@ -673,9 +678,8 @@ function handleFileChange(input) {
   reader.readAsDataURL(file);
 }
 
-// Tombol "Ganti gambar" klik trigger input file lagi
 document.getElementById('btnGantiGambar').addEventListener('click', function(e) {
-  e.stopPropagation(); // cegah uploadArea click
+  e.stopPropagation();
   document.getElementById('gambar').click();
 });
 </script>
